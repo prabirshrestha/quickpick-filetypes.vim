@@ -1,27 +1,30 @@
-function! quickpick#pickers#filetypes#show(...) abort
-    let id = quickpick#create({
-        \   'on_change': function('s:on_change'),
-        \   'on_accept': function('s:on_accept'),
-        \   'items': s:get_filetypes(0),
-        \ })
-    call quickpick#show(id)
-    return id
+function! quickpick#pickers#filetypes#open() abort
+  let l:initial_filetype = &filetype
+  call quickpick#open({
+    \ 'items': uniq(sort(map(split(globpath(&rtp, 'syntax/*.vim'), '\n'), 'fnamemodify(v:val, ":t:r")'))),
+    \ 'on_accept': function('s:on_accept'),
+    \ 'on_selection': function('s:on_selection', [l:initial_filetype]),
+    \ 'on_cancel': function('s:on_cancel', [l:initial_filetype]),
+    \ })
 endfunction
 
-function! s:get_filetypes(refresh) abort
-    if !exists('s:filetypes') || a:refresh
-        let s:filetypes = uniq(sort(map(split(globpath(&rtp, 'syntax/*.vim'), '\n'), 'fnamemodify(v:val, ":t:r")')))
-    endif
-    return s:filetypes
+function! s:on_accept(data, ...) abort
+  call quickpick#close()
+  execute 'set filetype=' . a:data['items'][0]
 endfunction
 
-function! s:on_change(id, action, searchterm) abort
-    let searchterm = tolower(a:searchterm)
-    let items = empty(trim(searchterm)) ? s:get_filetypes(0) : filter(copy(s:get_filetypes(0)), {index, item-> stridx(tolower(item), searchterm) > -1})
-    call quickpick#set_items(a:id, items)
-endfunction
-
-function! s:on_accept(id, action, data) abort
-    call quickpick#close(a:id)
+function! s:on_selection(initial_filetype, data, ...) abort
+  if empty(a:data['items'])
+    execute 'set filetype=' . a:initial_filetype
+  else
     execute 'set filetype=' . a:data['items'][0]
+  endif
 endfunction
+
+function! s:on_cancel(initial_filetype, data, ...) abort
+  if !empty(a:initial_filetype)
+    execute 'set filetype=' . a:initial_filetype
+  endif
+endfunction
+
+" vim: set sw=2 ts=2 sts=2 et tw=78 foldmarker={{{,}}} foldmethod=marker spell:
