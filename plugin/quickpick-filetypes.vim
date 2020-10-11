@@ -1,6 +1,6 @@
-if exists('g:quickpick_filetypes')
+if exists('g:quickpick_filetypes_loaded')
     finish
 endif
-let g:quickpick_filetypes = 1
+let g:quickpick_filetypes_loaded = 1
 
-command! Pfiletypes call quickpick#pickers#filetypes#show()
+command! Pfiletypes call quickpick#pickers#filetypes#open()
